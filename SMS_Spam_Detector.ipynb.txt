@@ -1,0 +1,2502 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "collapsed_sections": [
+        "MeIXGfZxVWK5"
+      ]
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# **SMS Spam Detector Using Natural Language Processing (NLP)\n",
+        "## 1. Project Introduction\n",
+        "This project aims to develop a machine learning model that classifies SMS messages as either spam or legitimate (ham) messages using Natural Language Processing techniques**"
+      ],
+      "metadata": {
+        "id": "kdHb5oCfNT4f"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**2.Importing** **ReqRequireduired** Libraries\n",
+        "The following Python libraries are imported to support data manipulation, analysis and visualization."
+      ],
+      "metadata": {
+        "id": "km7icBv_Obnt"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "\n",
+        "print(\"Libraries imported successfully!\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "XnaVP7hXOA0g",
+        "outputId": "a20b0233-8298-4e8e-ad72-5dc591ff7eb3"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Libraries imported successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "3.1 Downloading the Dataset\n",
+        "\n",
+        "# **The SMS Spam Collection dataset is obtained from the UCI Machine Learning Repository. It is downloaded directly into the Google Colab environment and extracted for use in the project. This approach makes the dataset readily accessible without requiring manual uploads.**"
+      ],
+      "metadata": {
+        "id": "HMtCzjpsuBcz"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import urllib.request\n",
+        "import zipfile\n",
+        "import os\n",
+        "\n",
+        "# Download the dataset\n",
+        "url = \"https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip\"\n",
+        "\n",
+        "urllib.request.urlretrieve(url, \"sms_spam.zip\")\n",
+        "\n",
+        "# Extract the dataset\n",
+        "with zipfile.ZipFile(\"sms_spam.zip\", \"r\") as zip_ref:\n",
+        "    zip_ref.extractall(\"/content/\")\n",
+        "\n",
+        "    print(\"Dataset downloaded and extracted successfully!\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "9JF3_wrQuQVe",
+        "outputId": "408ced4d-6118-4b41-c128-d53d8d037ece"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Dataset downloaded and extracted successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "3.2 Verifying the Downloaded Dataset\n",
+        "\n",
+        "# **After downloading and extracting the dataset, we verify that the SMS file exists in the Google Colab working directory. This ensures that the dataset is available before loading it into a Pandas DataFrame.**"
+      ],
+      "metadata": {
+        "id": "m1m_LviVuyZ5"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "print(os.listdir('/content'))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MKI6DMnDu9Hx",
+        "outputId": "77ff9156-87b7-4f2e-e23f-93036f83216c"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "['.config', 'readme', 'requirements.txt', 'SMSSpamCollection', 'README.md', 'sms_spam.zip', 'sample_data']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "3.3 Loading the Dataset\n",
+        "\n",
+        "# **The extracted SMS Spam Collection file is loaded into a Pandas DataFrame. The dataset is tab-separated and contains two main fields: the message category (label) and the SMS text (message).**"
+      ],
+      "metadata": {
+        "id": "UopV6SHDvFSk"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df = pd.read_csv(\n",
+        "      '/content/SMSSpamCollection',\n",
+        "          sep='\\t',\n",
+        "              header=None,\n",
+        "                  names=['label', 'message']\n",
+        "                  )\n",
+        "\n",
+        "print(\"Dataset loaded successfully!\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "C_HenPt1vRYN",
+        "outputId": "5f1d0779-0c2d-4271-8c31-e8f661ea5832"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Dataset loaded successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "4. Initial Data Exploration\n",
+        "\n",
+        "# **In this section, we perform an initial exploration of the SMS Spam Collection dataset to understand its structure and contents. We examine the dataset dimensions and display sample records to become familiar with the messages and their corresponding labels.**"
+      ],
+      "metadata": {
+        "id": "nW1aBwLXxePk"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Display dataset dimensions\n",
+        "print(\"Dataset Shape:\", df.shape)\n",
+        "\n",
+        "# Display the first five records\n",
+        "df.head()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 224
+        },
+        "id": "e5MDVedByeyM",
+        "outputId": "5f400735-5be4-4bf1-fe3f-67202b15d72a"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Dataset Shape: (5572, 2)\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "  label                                            message\n",
+              "0   ham  Go until jurong point, crazy.. Available only ...\n",
+              "1   ham                      Ok lar... Joking wif u oni...\n",
+              "2  spam  Free entry in 2 a wkly comp to win FA Cup fina...\n",
+              "3   ham  U dun say so early hor... U c already then say...\n",
+              "4   ham  Nah I don't think he goes to usf, he lives aro..."
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-26776690-05bf-42e1-9f5a-09f04ccb928b\" class=\"colab-df-container\">\n",
+              "    <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>label</th>\n",
+              "      <th>message</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>ham</td>\n",
+              "      <td>Go until jurong point, crazy.. Available only ...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>ham</td>\n",
+              "      <td>Ok lar... Joking wif u oni...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>spam</td>\n",
+              "      <td>Free entry in 2 a wkly comp to win FA Cup fina...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>ham</td>\n",
+              "      <td>U dun say so early hor... U c already then say...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>ham</td>\n",
+              "      <td>Nah I don't think he goes to usf, he lives aro...</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>\n",
+              "    <div class=\"colab-df-buttons\">\n",
+              "\n",
+              "  <div class=\"colab-df-container\">\n",
+              "    <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-26776690-05bf-42e1-9f5a-09f04ccb928b')\"\n",
+              "            title=\"Convert this dataframe to an interactive table.\"\n",
+              "            style=\"display:none;\">\n",
+              "\n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\">\n",
+              "    <path d=\"M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z\"/>\n",
+              "  </svg>\n",
+              "    </button>\n",
+              "\n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-buttons div {\n",
+              "      margin-bottom: 4px;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "    <script>\n",
+              "      const buttonEl =\n",
+              "        document.querySelector('#df-26776690-05bf-42e1-9f5a-09f04ccb928b button.colab-df-convert');\n",
+              "      buttonEl.style.display =\n",
+              "        google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "      async function convertToInteractive(key) {\n",
+              "        const element = document.querySelector('#df-26776690-05bf-42e1-9f5a-09f04ccb928b');\n",
+              "        const dataTable =\n",
+              "          await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                    [key], {});\n",
+              "        if (!dataTable) return;\n",
+              "\n",
+              "        const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "          '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "          + ' to learn more about interactive tables.';\n",
+              "        element.innerHTML = '';\n",
+              "        dataTable['output_type'] = 'display_data';\n",
+              "        await google.colab.output.renderOutput(dataTable, element);\n",
+              "        const docLink = document.createElement('div');\n",
+              "        docLink.innerHTML = docLinkHtml;\n",
+              "        element.appendChild(docLink);\n",
+              "      }\n",
+              "    </script>\n",
+              "  </div>\n",
+              "\n",
+              "\n",
+              "    </div>\n",
+              "  </div>\n"
+            ],
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "dataframe",
+              "variable_name": "df",
+              "summary": "{\n  \"name\": \"df\",\n  \"rows\": 5572,\n  \"fields\": [\n    {\n      \"column\": \"label\",\n      \"properties\": {\n        \"dtype\": \"category\",\n        \"num_unique_values\": 2,\n        \"samples\": [\n          \"spam\",\n          \"ham\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"message\",\n      \"properties\": {\n        \"dtype\": \"string\",\n        \"num_unique_values\": 5169,\n        \"samples\": [\n          \"K, makes sense, btw carlos is being difficult so you guys are gonna smoke while I go pick up the second batch and get gas\",\n          \"URGENT! Your mobile No *********** WON a \\u00a32,000 Bonus Caller Prize on 02/06/03! This is the 2nd attempt to reach YOU! Call 09066362220 ASAP! BOX97N7QP, 150ppm\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    }\n  ]\n}"
+            }
+          },
+          "metadata": {},
+          "execution_count": 13
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# 5. **Checking** the Dataset Information\n",
+        "\n",
+        "In this section, we examine the dataset to understand its structure, column names, data types and the number of non-null values. This helps us identify missing values and understand the data before preprocessing."
+      ],
+      "metadata": {
+        "id": "rFvyeOCkUwUb"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df. info()"
+      ],
+      "metadata": {
+        "id": "pGbq0GpjVMs3",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "79ab2b81-8bfa-48bb-9d9b-d2c4f6b2def9"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "<class 'pandas.core.frame.DataFrame'>\n",
+            "RangeIndex: 5572 entries, 0 to 5571\n",
+            "Data columns (total 2 columns):\n",
+            " #   Column   Non-Null Count  Dtype \n",
+            "---  ------   --------------  ----- \n",
+            " 0   label    5572 non-null   object\n",
+            " 1   message  5572 non-null   object\n",
+            "dtypes: object(2)\n",
+            "memory usage: 87.2+ KB\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "6. **Checking** for Missing Values\n",
+        "\n",
+        "Missing values can affect the performance and reliability of a machine learning model. In this section, we check whether the dataset contains any missing entries."
+      ],
+      "metadata": {
+        "id": "-CQjjPKNVcGH"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df. isnull(). sum()"
+      ],
+      "metadata": {
+        "id": "RStTDoVVW2e2",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 147
+        },
+        "outputId": "d4303c97-f014-493a-aec4-b2cf0071e329"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "label      0\n",
+              "message    0\n",
+              "dtype: int64"
+            ],
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>0</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>label</th>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>message</th>\n",
+              "      <td>0</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div><br><label><b>dtype:</b> int64</label>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 15
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "7. **Checking** for Duplicate Records\n",
+        "\n",
+        "Duplicate records may introduce bias into our dataset. We identify duplicate messages to determine whether data cleaning is required."
+      ],
+      "metadata": {
+        "id": "LxOF6FhUXcXJ"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df. duplicated(). sum()"
+      ],
+      "metadata": {
+        "id": "_eVtgvyIagLF",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "f1d5d104-52ee-4c93-a99e-5b87aa6e2457"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "np.int64(403)"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 16
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "8. Understanding the Distribution of Spam and Ham Messages\n",
+        "\n",
+        "In this section, we examine the distribution of spam and ham (legitimate) messages in the dataset. This helps us understand the balance between the two categories before training our machine learning model."
+      ],
+      "metadata": {
+        "id": "hIOx-v4QdU-Y"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Count the number of messages in each category\n",
+        "\n",
+        "df['label'].value_counts()"
+      ],
+      "metadata": {
+        "id": "x0DRNkgMd-J3",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 178
+        },
+        "outputId": "03349e0b-1cbd-4b18-9fb2-63c4a031c036"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "label\n",
+              "ham     4825\n",
+              "spam     747\n",
+              "Name: count, dtype: int64"
+            ],
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>count</th>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>label</th>\n",
+              "      <th></th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>ham</th>\n",
+              "      <td>4825</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>spam</th>\n",
+              "      <td>747</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div><br><label><b>dtype:</b> int64</label>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 17
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "9. Data Cleaning and Preparation\n",
+        "\n",
+        "Data cleaning is an important step in preparing a dataset for machine learning. In this section, we remove duplicate records to improve data quality and reduce the possibility of biased model training. We also prepare the text data for further processing."
+      ],
+      "metadata": {
+        "id": "JflYw_zmzCB8"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Remove duplicate records\n",
+        "df = df.drop_duplicates()\n",
+        "\n",
+        "# Check the new dataset dimensions\n",
+        "df.shape"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Uas5nhxpzt-D",
+        "outputId": "f764cbdc-7371-4469-abc1-33111bb146fb"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "(5169, 2)"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 18
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "10. Text Preprocessing\n",
+        "\n",
+        "Text preprocessing is an important step in Natural Language Processing (NLP). It involves cleaning raw text data to make it suitable for machine learning.\n",
+        "\n",
+        "In this section, we convert all SMS messages to lowercase, remove punctuation marks and eliminate unnecessary spaces. This helps maintain consistency in the text data before converting the messages into numerical features using TF-IDF."
+      ],
+      "metadata": {
+        "id": "k_oYgXMS1yPO"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Convert all messages to lowercase\n",
+        "\n",
+        "df['message'] = df['message'].str.lower()\n",
+        "\n",
+        "# Display sample messages\n",
+        "df['message'].head()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 241
+        },
+        "id": "ypP7QDSI2Uwd",
+        "outputId": "ecd8c13a-e9b2-459a-9a5b-726155d37fc8"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "0    go until jurong point, crazy.. available only ...\n",
+              "1                        ok lar... joking wif u oni...\n",
+              "2    free entry in 2 a wkly comp to win fa cup fina...\n",
+              "3    u dun say so early hor... u c already then say...\n",
+              "4    nah i don't think he goes to usf, he lives aro...\n",
+              "Name: message, dtype: object"
+            ],
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>message</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>go until jurong point, crazy.. available only ...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>ok lar... joking wif u oni...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>free entry in 2 a wkly comp to win fa cup fina...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>u dun say so early hor... u c already then say...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>nah i don't think he goes to usf, he lives aro...</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div><br><label><b>dtype:</b> object</label>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 19
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "10.2 Removing Punctuation\n",
+        "\n",
+        "Punctuation marks such as commas, full stops, exclamation marks and question marks are removed from the SMS messages. This reduces unnecessary characters and helps standardise the text data for further processing."
+      ],
+      "metadata": {
+        "id": "yyJDEca42YYi"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "import string\n",
+        "\n",
+        "# Remove punctuation marks from messages\n",
+        "\n",
+        "df['message'] = df['message'].apply(\n",
+        "    lambda text: text.translate(\n",
+        "        str.maketrans('', '', string.punctuation)\n",
+        "    )\n",
+        ")\n",
+        "\n",
+        "# Display sample cleaned messages\n",
+        "df['message'].head()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 241
+        },
+        "id": "zOqNtgir240A",
+        "outputId": "01d5280a-c399-4a0b-fd86-a3077a6569c9"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "0    go until jurong point crazy available only in ...\n",
+              "1                              ok lar joking wif u oni\n",
+              "2    free entry in 2 a wkly comp to win fa cup fina...\n",
+              "3          u dun say so early hor u c already then say\n",
+              "4    nah i dont think he goes to usf he lives aroun...\n",
+              "Name: message, dtype: object"
+            ],
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>message</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>go until jurong point crazy available only in ...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>ok lar joking wif u oni</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>free entry in 2 a wkly comp to win fa cup fina...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>u dun say so early hor u c already then say</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>nah i dont think he goes to usf he lives aroun...</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div><br><label><b>dtype:</b> object</label>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 20
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "10.3 Removing Extra Spaces\n",
+        "\n",
+        "After removing punctuation, some messages may contain unnecessary spaces. In this section, we remove extra spaces at the beginning and end of messages and replace multiple spaces with a single space."
+      ],
+      "metadata": {
+        "id": "bDFyNcoc3Jyc"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Remove unnecessary spaces\n",
+        "\n",
+        "df['message'] = df['message'].str.replace(\n",
+        "    r'\\s+', ' ', regex=True\n",
+        ").str.strip()\n",
+        "\n",
+        "# Display cleaned messages\n",
+        "df['message'].head()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 241
+        },
+        "id": "Xsxd_2jv3NZ2",
+        "outputId": "1f2b0c4e-f171-4228-d80b-4e3ba50f7ad3"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "0    go until jurong point crazy available only in ...\n",
+              "1                              ok lar joking wif u oni\n",
+              "2    free entry in 2 a wkly comp to win fa cup fina...\n",
+              "3          u dun say so early hor u c already then say\n",
+              "4    nah i dont think he goes to usf he lives aroun...\n",
+              "Name: message, dtype: object"
+            ],
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>message</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>go until jurong point crazy available only in ...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>ok lar joking wif u oni</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>free entry in 2 a wkly comp to win fa cup fina...</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>u dun say so early hor u c already then say</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>nah i dont think he goes to usf he lives aroun...</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div><br><label><b>dtype:</b> object</label>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 21
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "11. Encoding the Target Labels\n",
+        "\n",
+        "Machine learning algorithms work with numerical values rather than text labels. In this section, we convert the message categories into numerical values.\n",
+        "\n",
+        "The labels are encoded as follows:\n",
+        "\n",
+        "- Ham (not spam) = 0\n",
+        "- Spam = 1\n",
+        "\n",
+        "This allows the machine learning model to distinguish between legitimate and spam messages during training."
+      ],
+      "metadata": {
+        "id": "HB2oCidL5D_x"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Convert text labels into numerical values\n",
+        "\n",
+        "df['label'] = df['label'].map({\n",
+        "    'ham': 0,\n",
+        "    'spam': 1\n",
+        "})\n",
+        "\n",
+        "# Display the updated labels\n",
+        "df['label'].value_counts()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 178
+        },
+        "id": "OMNpY2VX5ISj",
+        "outputId": "70047de7-6114-4ed6-90e8-ef4764f5a51e"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "label\n",
+              "0    4516\n",
+              "1     653\n",
+              "Name: count, dtype: int64"
+            ],
+            "text/html": [
+              "<div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>count</th>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>label</th>\n",
+              "      <th></th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>4516</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>653</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div><br><label><b>dtype:</b> int64</label>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 22
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "12. Separating Features and Target\n",
+        "\n",
+        "In this section, we separate the dataset into independent and dependent variables.\n",
+        "\n",
+        "The message column will serve as our independent variable (X), while the label column will serve as our dependent variable (y).\n",
+        "\n",
+        "The model will use the SMS messages to predict whether each message is spam or legitimate."
+      ],
+      "metadata": {
+        "id": "M3xBCVYB5PSd"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Define the input features and target variable\n",
+        "\n",
+        "X = df['message']\n",
+        "y = df['label']\n",
+        "\n",
+        "print(\"Features and target separated successfully!\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "qVvAkRSi5UsX",
+        "outputId": "d04befde-cf45-42c0-dd9d-f3e2da4a5950"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Features and target separated successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "13. Splitting the Dataset into Training and Testing Sets\n",
+        "\n",
+        "The dataset is divided into training and testing sets. The training set is used to teach the machine learning model, while the testing set is used to evaluate its performance on unseen messages.\n",
+        "\n",
+        "We allocate 80% of the data for training and 20% for testing. Stratified sampling is applied to maintain the proportion of spam and legitimate messages in both sets."
+      ],
+      "metadata": {
+        "id": "FMAWBVjp5aad"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.model_selection import train_test_split\n",
+        "\n",
+        "# Split the dataset\n",
+        "\n",
+        "X_train, X_test, y_train, y_test = train_test_split(\n",
+        "    X,\n",
+        "    y,\n",
+        "    test_size=0.2,\n",
+        "    random_state=42,\n",
+        "    stratify=y\n",
+        ")\n",
+        "\n",
+        "print(\"Training and testing sets created successfully!\")\n",
+        "\n",
+        "print(\"Training samples:\", len(X_train))\n",
+        "print(\"Testing samples:\", len(X_test))"
+      ],
+      "metadata": {
+        "id": "UQC_27335wJJ",
+        "outputId": "b81369af-032e-46b6-c6ee-a83de3d246ed",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        }
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Training and testing sets created successfully!\n",
+            "Training samples: 4135\n",
+            "Testing samples: 1034\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "14. Text Vectorisation Using TF-IDF\n",
+        "\n",
+        "TF-IDF (Term Frequency-Inverse Document Frequency) is a technique used in Natural Language Processing to convert text into numerical values that machine learning algorithms can understand.\n",
+        "\n",
+        "It assigns importance to words based on how frequently they appear in a message and how common or rare they are across all messages.\n",
+        "\n",
+        "We use TF-IDF to transform our SMS messages into numerical feature vectors for model training."
+      ],
+      "metadata": {
+        "id": "nfEYzH166Ir5"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.feature_extraction.text import TfidfVectorizer\n",
+        "\n",
+        "# Initialise the TF-IDF vectorizer\n",
+        "\n",
+        "tfidf = TfidfVectorizer()\n",
+        "\n",
+        "# Fit on training messages and transform them\n",
+        "X_train_tfidf = tfidf.fit_transform(X_train)\n",
+        "\n",
+        "# Transform testing messages\n",
+        "X_test_tfidf = tfidf.transform(X_test)\n",
+        "\n",
+        "print(\"TF-IDF vectorisation completed!\")\n",
+        "print(\"Training data shape:\", X_train_tfidf.shape)\n",
+        "print(\"Testing data shape:\", X_test_tfidf.shape)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "30cjvmlm6L9s",
+        "outputId": "b3bbaeaa-e40f-4ca4-ec15-061723042c16"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "TF-IDF vectorisation completed!\n",
+            "Training data shape: (4135, 8358)\n",
+            "Testing data shape: (1034, 8358)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "15. Training the Machine Learning Models\n",
+        "\n",
+        "In this section, we train two machine learning algorithms: Multinomial Naive Bayes and Logistic Regression.\n",
+        "\n",
+        "These algorithms are commonly used for text classification tasks. Both models will learn from the TF-IDF features to identify patterns associated with spam and legitimate messages.\n",
+        "\n",
+        "We will later compare their performance to determine which model is more suitable for our SMS Spam Detector."
+      ],
+      "metadata": {
+        "id": "G5YHeLvX6kiJ"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.naive_bayes import MultinomialNB\n",
+        "\n",
+        "# Initialise the Naive Bayes model\n",
+        "nb_model = MultinomialNB()\n",
+        "\n",
+        "# Train the model\n",
+        "nb_model.fit(X_train_tfidf, y_train)\n",
+        "\n",
+        "print(\"Naive Bayes model trained successfully!\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "BiHlJnT31iDL",
+        "outputId": "06f82e00-a053-46dc-9546-237e1e6daf73"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Naive Bayes model trained successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "16. Making Predictions Using the Trained Models\n",
+        "\n",
+        "After training the machine learning models, we use them to predict the categories of messages in the testing dataset.\n",
+        "\n",
+        "The testing data contains messages that the models have not seen during training. This allows us to assess how well the models can classify new SMS messages."
+      ],
+      "metadata": {
+        "id": "pNQxpylo7CXv"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Make predictions using Naive Bayes\n",
+        "nb_predictions = nb_model.predict(X_test_tfidf)\n",
+        "\n",
+        "# Make predictions using Logistic Regression\n",
+        "lr_predictions = lr_model.predict(X_test_tfidf)\n",
+        "\n",
+        "print(\"Predictions completed successfully!\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "25YfuwI81mjI",
+        "outputId": "3ac4bfa5-e975-49ac-a581-7c70b20f0135"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Predictions completed successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "17.1 Naive Bayes Model Evaluation\n",
+        "\n",
+        "In this section, we evaluate the Naive Bayes model by comparing its predictions with the actual labels in the testing dataset. We use accuracy, precision, recall and F1-score to measure the model's performance."
+      ],
+      "metadata": {
+        "id": "z-7yq-0p-8JO"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.metrics import accuracy_score, classification_report\n",
+        "\n",
+        "# Calculate model accuracy\n",
+        "nb_accuracy = accuracy_score(y_test, nb_predictions)\n",
+        "\n",
+        "print(\"Naive Bayes Accuracy:\", nb_accuracy)\n",
+        "\n",
+        "# Display classification report\n",
+        "print(classification_report(\n",
+        "    y_test,\n",
+        "    nb_predictions,\n",
+        "    target_names=['Ham', 'Spam'],\n",
+        "    zero_division=0\n",
+        "))"
+      ],
+      "metadata": {
+        "id": "dKvqtki-_Cgl",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "4cd52270-91d4-4468-cd86-20b3541a7e70"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Naive Bayes Accuracy: 0.9487427466150871\n",
+            "              precision    recall  f1-score   support\n",
+            "\n",
+            "         Ham       0.94      1.00      0.97       903\n",
+            "        Spam       1.00      0.60      0.75       131\n",
+            "\n",
+            "    accuracy                           0.95      1034\n",
+            "   macro avg       0.97      0.80      0.86      1034\n",
+            "weighted avg       0.95      0.95      0.94      1034\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "17.2 Logistic Regression Model Evaluation\n",
+        "\n",
+        "In this section, we evaluate the Logistic Regression model using accuracy, precision, recall and F1-score. The results will be compared with those of the Naive Bayes model to identify the better-performing classifier."
+      ],
+      "metadata": {
+        "id": "RBSEsW4G_PlR"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "lr_accuracy = accuracy_score(y_test, lr_predictions)\n",
+        "\n",
+        "print(\"Logistic Regression Accuracy:\", lr_accuracy)\n",
+        "\n",
+        "print(classification_report(\n",
+        "    y_test,\n",
+        "    lr_predictions,\n",
+        "    target_names=['Ham', 'Spam'],\n",
+        "    zero_division=0\n",
+        "))"
+      ],
+      "metadata": {
+        "id": "0-ilvCAe_Vei"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "18. Confusion Matrix\n",
+        "\n",
+        "A confusion matrix is used to evaluate the performance of a classification model by comparing actual labels with predicted labels.\n",
+        "\n",
+        "It helps us identify correct and incorrect predictions made by the model.\n",
+        "\n",
+        "The confusion matrix consists of four outcomes:\n",
+        "\n",
+        "- True Positive (TP): Spam messages correctly classified as spam.\n",
+        "- True Negative (TN): Ham messages correctly classified as ham.\n",
+        "- False Positive (FP): Ham messages incorrectly classified as spam.\n",
+        "- False Negative (FN): Spam messages incorrectly classified as ham.\n",
+        "\n",
+        "This evaluation helps us understand the strengths and weaknesses of each model."
+      ],
+      "metadata": {
+        "id": "jV8shG7h_sqB"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "18.1 Naive Bayes Confusion Matrix\n",
+        "In this section, we generate a confusion matrix for the Naive Bayes model to examine how accurately it identifies spam and legitimate messages."
+      ],
+      "metadata": {
+        "id": "zGZ8E1LcOBpE"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay\n",
+        "\n",
+        "# Generate confusion matrix\n",
+        "nb_cm = confusion_matrix(y_test, nb_predictions)\n",
+        "\n",
+        "# Display confusion matrix\n",
+        "disp = ConfusionMatrixDisplay(\n",
+        "    confusion_matrix=nb_cm,\n",
+        "    display_labels=['Ham', 'Spam']\n",
+        ")\n",
+        "\n",
+        "disp.plot()\n",
+        "plt.title(\"Naive Bayes Confusion Matrix\")\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "cRbTSBsyOGEB"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "18.2 Logistic Regression Confusion Matrix\n",
+        "\n",
+        "In this section, we generate a confusion matrix for the Logistic Regression model. The results will help us compare its classification performance with the Naive Bayes model."
+      ],
+      "metadata": {
+        "id": "8lkV9SwPOMIx"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Generate confusion matrix\n",
+        "lr_cm = confusion_matrix(y_test, lr_predictions)\n",
+        "\n",
+        "# Display confusion matrix\n",
+        "disp = ConfusionMatrixDisplay(\n",
+        "    confusion_matrix=lr_cm,\n",
+        "    display_labels=['Ham', 'Spam']\n",
+        ")\n",
+        "\n",
+        "disp.plot()\n",
+        "plt.title(\"Logistic Regression Confusion Matrix\")\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "my-_d5qROPIt"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "19. Model Comparison and Selection\n",
+        "\n",
+        "In this section, we compare the performance of the Naive Bayes and Logistic Regression models using accuracy, precision, recall and F1-score.\n",
+        "\n",
+        "The comparison will help us identify the most suitable model for our SMS Spam Detector. Special attention is given to spam precision and recall to ensure that the selected model can identify spam messages while minimising incorrect classifications of legitimate messages."
+      ],
+      "metadata": {
+        "id": "Z95pk6H1On2K"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.metrics import (\n",
+        "    accuracy_score,\n",
+        "    precision_score,\n",
+        "    recall_score,\n",
+        "    f1_score\n",
+        ")\n",
+        "\n",
+        "# Compare both models\n",
+        "model_comparison = pd.DataFrame({\n",
+        "    'Model': ['Naive Bayes', 'Logistic Regression'],\n",
+        "    'Accuracy': [\n",
+        "        accuracy_score(y_test, nb_predictions),\n",
+        "        accuracy_score(y_test, lr_predictions)\n",
+        "    ],\n",
+        "    'Spam Precision': [\n",
+        "        precision_score(y_test, nb_predictions, pos_label=1),\n",
+        "        precision_score(y_test, lr_predictions, pos_label=1)\n",
+        "    ],\n",
+        "    'Spam Recall': [\n",
+        "        recall_score(y_test, nb_predictions, pos_label=1),\n",
+        "        recall_score(y_test, lr_predictions, pos_label=1)\n",
+        "    ],\n",
+        "    'Spam F1-Score': [\n",
+        "        f1_score(y_test, nb_predictions, pos_label=1),\n",
+        "        f1_score(y_test, lr_predictions, pos_label=1)\n",
+        "    ]\n",
+        "})\n",
+        "\n",
+        "model_comparison"
+      ],
+      "metadata": {
+        "id": "_96PHv_FOrkj"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "20. Saving the Selected Model\n",
+        "\n",
+        "After comparing the performance of both machine learning models, the best-performing model will be selected for deployment.\n",
+        "\n",
+        "The selected model and the TF-IDF vectorizer will be saved using Joblib. This allows us to reuse the trained model and text vectorizer in our Streamlit application without training the model again."
+      ],
+      "metadata": {
+        "id": "TTnNRRnMRvf_"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model_comparison"
+      ],
+      "metadata": {
+        "id": "l8r0_-f2R0LP"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import joblib\n",
+        "import os\n",
+        "\n",
+        "# Create a folder for the saved model\n",
+        "os.makedirs(\"models\", exist_ok=True)\n",
+        "\n",
+        "# Select Logistic Regression\n",
+        "best_model = lr_model\n",
+        "\n",
+        "# Save the model and vectorizer together\n",
+        "artifacts = {\n",
+        "    \"model\": best_model,\n",
+        "    \"vectorizer\": tfidf\n",
+        "}\n",
+        "\n",
+        "joblib.dump(artifacts, \"models/sms_spam_detector.pkl\")\n",
+        "\n",
+        "print(\"Model and vectorizer saved successfully!\")"
+      ],
+      "metadata": {
+        "id": "6o0jluqVSuYj",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "9fad6587-dccd-4b25-932c-38b55e744d76"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Model and vectorizer saved successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 21. Testing the Model with New SMS Messages.\n",
+        "\n",
+        "In this section, we test the saved model using new SMS messages to see how well it classifies them as spam or ham (not spam)."
+      ],
+      "metadata": {
+        "id": "PYf0qFtYTa1u"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def predict_sms(message):\n",
+        "    cleaned_message = message.lower()\n",
+        "    cleaned_message = cleaned_message.translate(\n",
+        "        str.maketrans('', '', string.punctuation)\n",
+        "    )\n",
+        "    cleaned_message = ' '.join(cleaned_message.split())\n",
+        "\n",
+        "    message_vector = tfidf.transform([cleaned_message])\n",
+        "\n",
+        "    prediction = best_model.predict(message_vector)[0]\n",
+        "    probabilities = best_model.predict_proba(message_vector)[0]\n",
+        "\n",
+        "    confidence = probabilities[prediction] * 100\n",
+        "\n",
+        "    result = \"SPAM\" if prediction == 1 else \"NOT SPAM\"\n",
+        "\n",
+        "    return result, confidence"
+      ],
+      "metadata": {
+        "id": "OYcZdsg8Tt9r"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "test_messages = [\n",
+        "    \"Congratulations! You have won a free prize. Call now!\",\n",
+        "    \"Hello, how are you doing today?\",\n",
+        "    \"URGENT! Claim your cash reward now!\"\n",
+        "]\n",
+        "\n",
+        "for message in test_messages:\n",
+        "    result, confidence = predict_sms(message)\n",
+        "    print(\"Message:\", message)\n",
+        "    print(\"Prediction:\", result)\n",
+        "    print(\"Confidence:\", round(confidence, 2), \"%\")\n",
+        "    print(\"-\" * 50)"
+      ],
+      "metadata": {
+        "id": "ZManFRJpT60Z",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "eec6c135-a7e6-4bf9-9aa5-f98f1a04c13a"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Message: Congratulations! You have won a free prize. Call now!\n",
+            "Prediction: SPAM\n",
+            "Confidence: 92.66 %\n",
+            "--------------------------------------------------\n",
+            "Message: Hello, how are you doing today?\n",
+            "Prediction: NOT SPAM\n",
+            "Confidence: 97.28 %\n",
+            "--------------------------------------------------\n",
+            "Message: URGENT! Claim your cash reward now!\n",
+            "Prediction: SPAM\n",
+            "Confidence: 83.69 %\n",
+            "--------------------------------------------------\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "The model successfully classified the three sample SMS messages. It identified promotional messages as spam and a normal conversational message as not spam. This demonstrates that the trained Logistic Regression model can make predictions on new messages."
+      ],
+      "metadata": {
+        "id": "MJblcj7oUX4W"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 22. Building the Streamlit Web Application\n",
+        "\n",
+        "In this section, we develop a simple web application using Streamlit. The application allows users to enter an SMS message and receive a prediction indicating whether the message is spam or not spam. It also displays the model's confidence score."
+      ],
+      "metadata": {
+        "id": "MeIXGfZxVWK5"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%%writefile app.py\n",
+        "import streamlit as st\n",
+        "import joblib\n",
+        "import string\n",
+        "\n",
+        "# Load the saved model and vectorizer\n",
+        "artifacts = joblib.load(\"models/sms_spam_detector.pkl\")\n",
+        "\n",
+        "model = artifacts[\"model\"]\n",
+        "vectorizer = artifacts[\"vectorizer\"]\n",
+        "\n",
+        "# Page configuration\n",
+        "st.set_page_config(\n",
+        "    page_title=\"SMS Spam Detector\",\n",
+        "    page_icon=\"📩\"\n",
+        ")\n",
+        "\n",
+        "st.title(\"📩 SMS Spam Detector\")\n",
+        "st.write(\"Enter an SMS message below to check whether it is spam or not.\")\n",
+        "\n",
+        "# User input\n",
+        "message = st.text_area(\"Enter your SMS message:\")\n",
+        "\n",
+        "if st.button(\"Check Message\"):\n",
+        "    if message.strip():\n",
+        "        cleaned_message = message.lower()\n",
+        "        cleaned_message = cleaned_message.translate(\n",
+        "            str.maketrans('', '', string.punctuation)\n",
+        "        )\n",
+        "        cleaned_message = ' '.join(cleaned_message.split())\n",
+        "\n",
+        "        message_vector = vectorizer.transform([cleaned_message])\n",
+        "\n",
+        "        prediction = model.predict(message_vector)[0]\n",
+        "        probabilities = model.predict_proba(message_vector)[0]\n",
+        "\n",
+        "        confidence = probabilities[prediction] * 100\n",
+        "\n",
+        "        if prediction == 1:\n",
+        "            st.error(\"🚨 This message is SPAM!\")\n",
+        "        else:\n",
+        "            st.success(\"✅ This message is NOT SPAM.\")\n",
+        "\n",
+        "        st.write(f\"Confidence: {confidence:.2f}%\")\n",
+        "    else:\n",
+        "        st.warning(\"Please enter a message.\")"
+      ],
+      "metadata": {
+        "id": "6kDUeyvoWovJ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 23. Checking Our Project Files\n",
+        "\n",
+        "**Explanation:** We are checking that the Streamlit application and trained model are both available before testing the application."
+      ],
+      "metadata": {
+        "id": "4shFMmRuXKoI"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "\n",
+        "print(\"Project files:\")\n",
+        "print(os.listdir())\n",
+        "\n",
+        "print(\"\\nModel folder contents:\")\n",
+        "print(os.listdir(\"models\"))"
+      ],
+      "metadata": {
+        "id": "sGqe9_lKXOr9",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "bc3ff633-93fe-420d-eeb2-5d00671ee9aa"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Project files:\n",
+            "['.config', 'readme', 'requirements.txt', 'SMSSpamCollection', 'README.md', 'models', 'sms_spam.zip', 'sample_data']\n",
+            "\n",
+            "Model folder contents:\n",
+            "['sms_spam_detector.pkl']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 24. Installing Streamlit\n",
+        "\n",
+        "In this section, we install Streamlit, the Python framework used to create and run our interactive SMS Spam Detector web application."
+      ],
+      "metadata": {
+        "id": "YXwqymlyXe9h"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install streamlit"
+      ],
+      "metadata": {
+        "id": "yT2AL8gYXkfy",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "80af8b1b-3bbb-49ba-8714-80644adf7567"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting streamlit\n",
+            "  Downloading streamlit-1.67.0-py3-none-any.whl.metadata (10 kB)\n",
+            "Requirement already satisfied: altair!=5.4.0,!=5.4.1,<7,>=5.0.0 in /usr/local/lib/python3.13/dist-packages (from streamlit) (5.5.0)\n",
+            "Requirement already satisfied: click<9,>=7.0 in /usr/local/lib/python3.13/dist-packages (from streamlit) (8.5.0)\n",
+            "Requirement already satisfied: numpy<3,>=1.25.0 in /usr/local/lib/python3.13/dist-packages (from streamlit) (2.4.6)\n",
+            "Requirement already satisfied: packaging>=20 in /usr/local/lib/python3.13/dist-packages (from streamlit) (26.3)\n",
+            "Requirement already satisfied: pandas<4,>=1.5.3 in /usr/local/lib/python3.13/dist-packages (from streamlit) (2.2.3)\n",
+            "Requirement already satisfied: pillow<14,>=9.2.0 in /usr/local/lib/python3.13/dist-packages (from streamlit) (11.3.0)\n",
+            "Collecting pydeck<1,>=0.8.0b4 (from streamlit)\n",
+            "  Downloading pydeck-0.9.3-py2.py3-none-any.whl.metadata (4.2 kB)\n",
+            "Requirement already satisfied: protobuf<8,>=5.26.1 in /usr/local/lib/python3.13/dist-packages (from streamlit) (6.33.6)\n",
+            "Requirement already satisfied: pyarrow!=25.0.0,<27,>=12.0.0 in /usr/local/lib/python3.13/dist-packages (from streamlit) (23.0.1)\n",
+            "Requirement already satisfied: requests<3,>=2.27 in /usr/local/lib/python3.13/dist-packages (from streamlit) (2.32.4)\n",
+            "Requirement already satisfied: typing-extensions<5,>=4.10.0 in /usr/local/lib/python3.13/dist-packages (from streamlit) (4.16.0)\n",
+            "Requirement already satisfied: starlette<2,>=0.46.0 in /usr/local/lib/python3.13/dist-packages (from streamlit) (1.10.0)\n",
+            "Requirement already satisfied: uvicorn<1,>=0.30.0 in /usr/local/lib/python3.13/dist-packages (from streamlit) (0.54.0)\n",
+            "Requirement already satisfied: anyio<5,>=4.0.0 in /usr/local/lib/python3.13/dist-packages (from streamlit) (4.16.0)\n",
+            "Requirement already satisfied: python-multipart<1,>=0.0.10 in /usr/local/lib/python3.13/dist-packages (from streamlit) (0.0.33)\n",
+            "Requirement already satisfied: websockets<18,>=12.0.0 in /usr/local/lib/python3.13/dist-packages (from streamlit) (15.0.1)\n",
+            "Requirement already satisfied: itsdangerous<3,>=2.1.2 in /usr/local/lib/python3.13/dist-packages (from streamlit) (2.2.0)\n",
+            "Requirement already satisfied: watchdog<8,>=2.1.5 in /usr/local/lib/python3.13/dist-packages (from streamlit) (6.0.0)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.13/dist-packages (from altair!=5.4.0,!=5.4.1,<7,>=5.0.0->streamlit) (3.1.6)\n",
+            "Requirement already satisfied: jsonschema>=3.0 in /usr/local/lib/python3.13/dist-packages (from altair!=5.4.0,!=5.4.1,<7,>=5.0.0->streamlit) (4.26.0)\n",
+            "Requirement already satisfied: narwhals>=1.14.2 in /usr/local/lib/python3.13/dist-packages (from altair!=5.4.0,!=5.4.1,<7,>=5.0.0->streamlit) (2.28.0)\n",
+            "Requirement already satisfied: idna>=2.8 in /usr/local/lib/python3.13/dist-packages (from anyio<5,>=4.0.0->streamlit) (3.20)\n",
+            "Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.13/dist-packages (from pandas<4,>=1.5.3->streamlit) (2.9.0.post0)\n",
+            "Requirement already satisfied: pytz>=2020.1 in /usr/local/lib/python3.13/dist-packages (from pandas<4,>=1.5.3->streamlit) (2025.2)\n",
+            "Requirement already satisfied: tzdata>=2022.7 in /usr/local/lib/python3.13/dist-packages (from pandas<4,>=1.5.3->streamlit) (2026.6)\n",
+            "Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.13/dist-packages (from requests<3,>=2.27->streamlit) (3.4.9)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.13/dist-packages (from requests<3,>=2.27->streamlit) (2.5.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.13/dist-packages (from requests<3,>=2.27->streamlit) (2026.10.23)\n",
+            "Requirement already satisfied: h11>=0.8 in /usr/local/lib/python3.13/dist-packages (from uvicorn<1,>=0.30.0->streamlit) (0.16.0)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.13/dist-packages (from jinja2->altair!=5.4.0,!=5.4.1,<7,>=5.0.0->streamlit) (3.0.4)\n",
+            "Requirement already satisfied: attrs>=22.2.0 in /usr/local/lib/python3.13/dist-packages (from jsonschema>=3.0->altair!=5.4.0,!=5.4.1,<7,>=5.0.0->streamlit) (26.1.0)\n",
+            "Requirement already satisfied: jsonschema-specifications>=2023.03.6 in /usr/local/lib/python3.13/dist-packages (from jsonschema>=3.0->altair!=5.4.0,!=5.4.1,<7,>=5.0.0->streamlit) (2025.9.1)\n",
+            "Requirement already satisfied: referencing>=0.28.4 in /usr/local/lib/python3.13/dist-packages (from jsonschema>=3.0->altair!=5.4.0,!=5.4.1,<7,>=5.0.0->streamlit) (0.37.0)\n",
+            "Requirement already satisfied: rpds-py>=0.25.0 in /usr/local/lib/python3.13/dist-packages (from jsonschema>=3.0->altair!=5.4.0,!=5.4.1,<7,>=5.0.0->streamlit) (2026.9.1)\n",
+            "Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.13/dist-packages (from python-dateutil>=2.8.2->pandas<4,>=1.5.3->streamlit) (1.17.0)\n",
+            "Downloading streamlit-1.67.0-py3-none-any.whl (11.2 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m11.2/11.2 MB\u001b[0m \u001b[31m7.7 MB/s\u001b[0m  \u001b[33m0:00:01\u001b[0m\n",
+            "\u001b[?25hDownloading pydeck-0.9.3-py2.py3-none-any.whl (11.4 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m11.4/11.4 MB\u001b[0m \u001b[31m9.1 MB/s\u001b[0m  \u001b[33m0:00:01\u001b[0m\n",
+            "\u001b[?25hInstalling collected packages: pydeck, streamlit\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m2/2\u001b[0m [streamlit]\n",
+            "\u001b[1A\u001b[2KSuccessfully installed pydeck-0.9.3 streamlit-1.67.0\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 25. Running the Streamlit Application\n",
+        "\n",
+        "In this section, we launch the Streamlit application to test its functionality and confirm that users can enter SMS messages and receive spam detection predictions."
+      ],
+      "metadata": {
+        "id": "KnIsbcOxX5aS"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install pyngrok"
+      ],
+      "metadata": {
+        "id": "0LN9rYRLX_6K"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "26. Creating the Requirements File\n",
+        "\n",
+        "The requirements file contains the Python libraries required to run the SMS Spam Detector application. It enables deployment platforms to install the necessary dependencies automatically."
+      ],
+      "metadata": {
+        "id": "-Ns9dyK0x3JX"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%%writefile requirements.txt\n",
+        "streamlit\n",
+        "scikit-learn\n",
+        "joblib"
+      ],
+      "metadata": {
+        "id": "a2dZ_-UTx8qN"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "27. Creating the Project Documentation (README)\n",
+        "\n",
+        "The README file provides an overview of the SMS Spam Detector project. It explains the project objectives, dataset, technologies, model development, evaluation results and instructions for running the application. It helps users, developers and project reviewers understand the purpose and functionality of the project."
+      ],
+      "metadata": {
+        "id": "0QYdAUjtyGI4"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "%%writefile README.md\n",
+        "# SMS Spam Detector Using Natural Language Processing (NLP)\n",
+        "\n",
+        "## 1. Project Overview\n",
+        "The SMS Spam Detector is a machine learning project that classifies SMS messages as either SPAM or NOT SPAM.\n",
+        "\n",
+        "The project uses Natural Language Processing (NLP) techniques and machine learning algorithms to identify unwanted or fraudulent text messages.\n",
+        "\n",
+        "## 2. Project Objectives\n",
+        "- Develop a model that identifies spam messages.\n",
+        "- Apply text preprocessing techniques.\n",
+        "- Convert text messages into numerical features using TF-IDF.\n",
+        "- Train and compare machine learning models.\n",
+        "- Evaluate model performance.\n",
+        "- Build an interactive Streamlit application.\n",
+        "\n",
+        "## 3. Dataset\n",
+        "The project uses the SMS Spam Collection Dataset from the UCI Machine Learning Repository.\n",
+        "\n",
+        "The dataset contains SMS messages labelled as:\n",
+        "- Ham: legitimate messages.\n",
+        "- Spam: unwanted messages.\n",
+        "\n",
+        "After removing duplicate records, 5,169 messages remained for model development.\n",
+        "\n",
+        "Dataset source:\n",
+        "https://archive.ics.uci.edu/dataset/228/sms+spam+collection\n",
+        "\n",
+        "## 4. Technologies and Libraries\n",
+        "- Python\n",
+        "- Pandas\n",
+        "- NumPy\n",
+        "- Scikit-learn\n",
+        "- Matplotlib\n",
+        "- Seaborn\n",
+        "- NLTK / Python string processing\n",
+        "- Joblib\n",
+        "- Streamlit\n",
+        "\n",
+        "## 5. Project Workflow\n",
+        "1. Load the dataset.\n",
+        "2. Explore the data.\n",
+        "3. Check for missing values and duplicates.\n",
+        "4. Clean and preprocess SMS messages.\n",
+        "5. Encode the message labels.\n",
+        "6. Split the dataset into training and testing sets.\n",
+        "7. Convert text into numerical features using TF-IDF.\n",
+        "8. Train Naive Bayes and Logistic Regression models.\n",
+        "9. Evaluate and compare model performance.\n",
+        "10. Save the selected model and TF-IDF vectorizer.\n",
+        "11. Develop a Streamlit application.\n",
+        "\n",
+        "## 6. Model Evaluation Results\n",
+        "\n",
+        "| Model | Accuracy | Spam Precision | Spam Recall | Spam F1-Score |\n",
+        "|---|---:|---:|---:|---:|\n",
+        "| Naive Bayes | 94.87% | 100.00% | 59.54% | 74.64% |\n",
+        "| Logistic Regression | 96.03% | 95.92% | 71.76% | 82.10% |\n",
+        "\n",
+        "Logistic Regression was selected because it achieved better overall performance and a better balance between spam precision and recall.\n",
+        "\n",
+        "## 7. Sample Predictions\n",
+        "- \"Congratulations! You have won a free prize. Call now!\" — SPAM (92.66%)\n",
+        "- \"Hello, how are you doing today?\" — NOT SPAM (97.28%)\n",
+        "- \"URGENT! Claim your cash reward now!\" — SPAM (83.69%)\n",
+        "\n",
+        "## 8. Streamlit Application\n",
+        "The application allows users to enter an SMS message and receive a prediction indicating whether the message is SPAM or NOT SPAM, together with a confidence score.\n",
+        "\n",
+        "## 9. Project Structure\n",
+        "SMS-Spam-Detector/\n",
+        "- app.py\n",
+        "- requirements.txt\n",
+        "- README.md\n",
+        "- SMS_Spam_Detector.ipynb\n",
+        "- models/\n",
+        "  - sms_spam_detector.pkl\n",
+        "\n",
+        "## 10. How to Run the Application\n",
+        "\n",
+        "Install the required libraries:\n",
+        "\n",
+        "pip install -r requirements.txt\n",
+        "\n",
+        "Run the Streamlit application:\n",
+        "\n",
+        "streamlit run app.py\n",
+        "\n",
+        "## 11. Deployment\n",
+        "The application can be deployed using Streamlit Community Cloud by connecting the GitHub repository.\n",
+        "\n",
+        "Deployment link: To be added after deployment.\n",
+        "\n",
+        "## 12. Conclusion\n",
+        "This project demonstrates how Natural Language Processing and machine learning can be used to classify SMS messages. Logistic Regression achieved an accuracy of approximately 96.03% and was selected as the final model."
+      ],
+      "metadata": {
+        "id": "0BZW7G2syl7q"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 28. Verifying the Final Project Files\n",
+        "\n",
+        "This section checks that all essential files required for the SMS Spam Detector application are available before preparing the project for GitHub submission."
+      ],
+      "metadata": {
+        "id": "cOn_bbgzyt0m"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "\n",
+        "print(\"Project files:\")\n",
+        "print(os.listdir())\n",
+        "\n",
+        "print(\"\\nChecking model folder:\")\n",
+        "\n",
+        "if os.path.exists(\"models\"):\n",
+        "    print(os.listdir(\"models\"))\n",
+        "else:\n",
+        "    print(\"Models folder is missing.\")\n",
+        "\n",
+        "print(\"\\nChecking essential files:\")\n",
+        "\n",
+        "required_files = [\n",
+        "    \"app.py\",\n",
+        "    \"requirements.txt\",\n",
+        "    \"README.md\",\n",
+        "    \"models/sms_spam_detector.pkl\"\n",
+        "]\n",
+        "\n",
+        "for file in required_files:\n",
+        "    print(file, \":\", os.path.exists(file))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "IUJDx1v_2vSE",
+        "outputId": "54e1fc58-8e43-48e4-ac53-eef49c70b1ba"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Project files:\n",
+            "['.config', 'readme', 'SMS_Spam_Detector_Files.zip', 'requirements.txt', 'SMSSpamCollection', 'README.md', 'models', 'sms_spam.zip', 'sample_data']\n",
+            "\n",
+            "Checking model folder:\n",
+            "['sms_spam_detector.pkl']\n",
+            "\n",
+            "Checking essential files:\n",
+            "app.py : False\n",
+            "requirements.txt : True\n",
+            "README.md : True\n",
+            "models/sms_spam_detector.pkl : True\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 29. Preparing the Project Files for GitHub\n",
+        "\n",
+        "The required application files and trained model are collected into a ZIP folder. This makes it easier to download and organise the project before uploading it to GitHub."
+      ],
+      "metadata": {
+        "id": "ZjQyo8yt2AY7"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "import zipfile\n",
+        "import os\n",
+        "\n",
+        "project_files = [\n",
+        "    \"app.py\",\n",
+        "    \"requirements.txt\",\n",
+        "    \"README.md\",\n",
+        "    \"models/sms_spam_detector.pkl\"\n",
+        "]\n",
+        "\n",
+        "with zipfile.ZipFile(\"SMS_Spam_Detector_Files.zip\", \"w\") as zip_file:\n",
+        "    for file in project_files:\n",
+        "        zip_file.write(file)\n",
+        "\n",
+        "print(\"Project files packaged successfully!\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 775
+        },
+        "id": "mNfRLfVL_z7E",
+        "outputId": "e282a2fb-7490-4d39-aaa5-9ef86d08e0e2"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "FileNotFoundError",
+          "evalue": "[Errno 2] No such file or directory: 'app.py'",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mFileNotFoundError\u001b[0m                         Traceback (most recent call last)",
+            "\u001b[0;32m/tmp/ipykernel_7351/2382625590.py\u001b[0m in \u001b[0;36m<cell line: 0>\u001b[0;34m()\u001b[0m\n\u001b[1;32m     11\u001b[0m \u001b[0;32mwith\u001b[0m \u001b[0mzipfile\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mZipFile\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"SMS_Spam_Detector_Files.zip\"\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0;34m\"w\"\u001b[0m\u001b[0;34m)\u001b[0m \u001b[0;32mas\u001b[0m \u001b[0mzip_file\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     12\u001b[0m     \u001b[0;32mfor\u001b[0m \u001b[0mfile\u001b[0m \u001b[0;32min\u001b[0m \u001b[0mproject_files\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m---> 13\u001b[0;31m         \u001b[0mzip_file\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mwrite\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfile\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m     14\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m     15\u001b[0m \u001b[0mprint\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0;34m\"Project files packaged successfully!\"\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/lib/python3.13/zipfile/__init__.py\u001b[0m in \u001b[0;36mwrite\u001b[0;34m(self, filename, arcname, compress_type, compresslevel)\u001b[0m\n\u001b[1;32m   1941\u001b[0m             )\n\u001b[1;32m   1942\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m-> 1943\u001b[0;31m         zinfo = ZipInfo.from_file(filename, arcname,\n\u001b[0m\u001b[1;32m   1944\u001b[0m                                   strict_timestamps=self._strict_timestamps)\n\u001b[1;32m   1945\u001b[0m \u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;32m/usr/lib/python3.13/zipfile/__init__.py\u001b[0m in \u001b[0;36mfrom_file\u001b[0;34m(cls, filename, arcname, strict_timestamps)\u001b[0m\n\u001b[1;32m    599\u001b[0m         \u001b[0;32mif\u001b[0m \u001b[0misinstance\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfilename\u001b[0m\u001b[0;34m,\u001b[0m \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mPathLike\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m:\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    600\u001b[0m             \u001b[0mfilename\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mfspath\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfilename\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0;32m--> 601\u001b[0;31m         \u001b[0mst\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mos\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mstat\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mfilename\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[0m\u001b[1;32m    602\u001b[0m         \u001b[0misdir\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mstat\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mS_ISDIR\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mst\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mst_mode\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n\u001b[1;32m    603\u001b[0m         \u001b[0mmtime\u001b[0m \u001b[0;34m=\u001b[0m \u001b[0mtime\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mlocaltime\u001b[0m\u001b[0;34m(\u001b[0m\u001b[0mst\u001b[0m\u001b[0;34m.\u001b[0m\u001b[0mst_mtime\u001b[0m\u001b[0;34m)\u001b[0m\u001b[0;34m\u001b[0m\u001b[0;34m\u001b[0m\u001b[0m\n",
+            "\u001b[0;31mFileNotFoundError\u001b[0m: [Errno 2] No such file or directory: 'app.py'"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "7OOcbnMeAevr"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "print(\"Checking trained model:\")\n",
+        "\n",
+        "print(\"Logistic Regression model:\", \"lr_model\" in globals())\n",
+        "print(\"TF-IDF vectorizer:\", \"tfidf\" in globals())"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "FnnBvdbw_eHf",
+        "outputId": "f32fb8c7-e7d3-4e55-a6d9-9732dfcb7809"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Checking trained model:\n",
+            "Logistic Regression model: True\n",
+            "TF-IDF vectorizer: True\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "import joblib\n",
+        "\n",
+        "os.makedirs(\"models\", exist_ok=True)\n",
+        "\n",
+        "artifacts = {\n",
+        "    \"model\": lr_model,\n",
+        "    \"vectorizer\": tfidf\n",
+        "}\n",
+        "\n",
+        "joblib.dump(\n",
+        "    artifacts,\n",
+        "    \"models/sms_spam_detector.pkl\"\n",
+        ")\n",
+        "\n",
+        "print(\"Model and vectorizer saved successfully!\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "yVUvZoAtAgCb",
+        "outputId": "9e6dbf44-c761-4bb1-95cd-b41e355cd715"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Model and vectorizer saved successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## Recreating the Streamlit Application\n",
+        "\n",
+        "This section creates the Streamlit application file. The application loads the trained Logistic Regression model and TF-IDF vectorizer to classify new SMS messages as SPAM or NOT SPAM."
+      ],
+      "metadata": {
+        "id": "KjJC6uv3AoSQ"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "%%writefile app.py\n",
+        "import streamlit as st\n",
+        "import joblib\n",
+        "import string\n",
+        "\n",
+        "# Load the saved model and vectorizer\n",
+        "artifacts = joblib.load(\"models/sms_spam_detector.pkl\")\n",
+        "\n",
+        "model = artifacts[\"model\"]\n",
+        "vectorizer = artifacts[\"vectorizer\"]\n",
+        "\n",
+        "st.set_page_config(\n",
+        "    page_title=\"SMS Spam Detector\",\n",
+        "    page_icon=\"📩\"\n",
+        ")\n",
+        "\n",
+        "st.title(\"📩 SMS Spam Detector\")\n",
+        "\n",
+        "st.write(\n",
+        "    \"Enter an SMS message below to check whether it is spam or not.\"\n",
+        ")\n",
+        "\n",
+        "message = st.text_area(\"Enter your SMS message:\")\n",
+        "\n",
+        "if st.button(\"Check Message\"):\n",
+        "\n",
+        "    if message.strip():\n",
+        "\n",
+        "        cleaned_message = message.lower()\n",
+        "\n",
+        "        cleaned_message = cleaned_message.translate(\n",
+        "            str.maketrans('', '', string.punctuation)\n",
+        "        )\n",
+        "\n",
+        "        cleaned_message = ' '.join(cleaned_message.split())\n",
+        "\n",
+        "        message_vector = vectorizer.transform([cleaned_message])\n",
+        "\n",
+        "        prediction = model.predict(message_vector)[0]\n",
+        "\n",
+        "        probabilities = model.predict_proba(message_vector)[0]\n",
+        "\n",
+        "        confidence = probabilities[prediction] * 100\n",
+        "\n",
+        "        if prediction == 1:\n",
+        "            st.error(\"🚨 This message is SPAM!\")\n",
+        "        else:\n",
+        "            st.success(\"✅ This message is NOT SPAM.\")\n",
+        "\n",
+        "        st.write(f\"Confidence: {confidence:.2f}%\")\n",
+        "\n",
+        "    else:\n",
+        "        st.warning(\"Please enter a message.\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Q7LELC1KAtrn",
+        "outputId": "bfcd8d38-c780-4d28-c8cd-8d2e649933cb"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Writing app.py\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "import os\n",
+        "\n",
+        "required_files = [\n",
+        "    \"app.py\",\n",
+        "    \"requirements.txt\",\n",
+        "    \"README.md\",\n",
+        "    \"models/sms_spam_detector.pkl\"\n",
+        "]\n",
+        "\n",
+        "print(\"Checking essential project files:\\n\")\n",
+        "\n",
+        "for file in required_files:\n",
+        "    print(file, \":\", os.path.exists(file))\n",
+        "\n",
+        "print(\"\\nModel folder contents:\")\n",
+        "print(os.listdir(\"models\"))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "9z09YrQRA1dL",
+        "outputId": "7f75fb81-28bc-4a7c-ff73-9b318dd81661"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Checking essential project files:\n",
+            "\n",
+            "app.py : True\n",
+            "requirements.txt : True\n",
+            "README.md : True\n",
+            "models/sms_spam_detector.pkl : True\n",
+            "\n",
+            "Model folder contents:\n",
+            "['sms_spam_detector.pkl']\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## 29. Preparing the Project Files for GitHub\n",
+        "\n",
+        "The required application files and trained model are collected into a ZIP folder. This makes it easier to download and organise the project before uploading it to GitHub."
+      ],
+      "metadata": {
+        "id": "FCvBynbAA-M3"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "\n",
+        "import zipfile\n",
+        "import os\n",
+        "\n",
+        "project_files = [\n",
+        "    \"app.py\",\n",
+        "    \"requirements.txt\",\n",
+        "    \"README.md\",\n",
+        "    \"models/sms_spam_detector.pkl\"\n",
+        "]\n",
+        "\n",
+        "with zipfile.ZipFile(\n",
+        "    \"SMS_Spam_Detector_Files.zip\",\n",
+        "    \"w\"\n",
+        ") as zip_file:\n",
+        "\n",
+        "    for file in project_files:\n",
+        "        if os.path.exists(file):\n",
+        "            zip_file.write(file)\n",
+        "        else:\n",
+        "            print(\"Missing file:\", file)\n",
+        "\n",
+        "print(\"Project files packaged successfully!\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "QsJwMQMAA-61",
+        "outputId": "a33fd019-ba6f-4768-bf16-ee9d4143060c"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Project files packaged successfully!\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import files\n",
+        "\n",
+        "files.download(\"SMS_Spam_Detector_Files.zip\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 17
+        },
+        "id": "Dmm3veuOBVkc",
+        "outputId": "9655e7cc-447b-4c36-9ddd-e1838911bc20"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.Javascript object>"
+            ],
+            "application/javascript": [
+              "\n",
+              "    async function download(id, filename, size) {\n",
+              "      if (!google.colab.kernel.accessAllowed) {\n",
+              "        return;\n",
+              "      }\n",
+              "      const div = document.createElement('div');\n",
+              "      const label = document.createElement('label');\n",
+              "      label.textContent = `Downloading \"${filename}\": `;\n",
+              "      div.appendChild(label);\n",
+              "      const progress = document.createElement('progress');\n",
+              "      progress.max = size;\n",
+              "      div.appendChild(progress);\n",
+              "      document.body.appendChild(div);\n",
+              "\n",
+              "      const buffers = [];\n",
+              "      let downloaded = 0;\n",
+              "\n",
+              "      const channel = await google.colab.kernel.comms.open(id);\n",
+              "      // Send a message to notify the kernel that we're ready.\n",
+              "      channel.send({})\n",
+              "\n",
+              "      for await (const message of channel.messages) {\n",
+              "        // Send a message to notify the kernel that we're ready.\n",
+              "        channel.send({})\n",
+              "        if (message.buffers) {\n",
+              "          for (const buffer of message.buffers) {\n",
+              "            buffers.push(buffer);\n",
+              "            downloaded += buffer.byteLength;\n",
+              "            progress.value = downloaded;\n",
+              "          }\n",
+              "        }\n",
+              "      }\n",
+              "      const blob = new Blob(buffers, {type: 'application/binary'});\n",
+              "      const a = document.createElement('a');\n",
+              "      a.href = window.URL.createObjectURL(blob);\n",
+              "      a.download = filename;\n",
+              "      div.appendChild(a);\n",
+              "      a.click();\n",
+              "      div.remove();\n",
+              "    }\n",
+              "  "
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<IPython.core.display.Javascript object>"
+            ],
+            "application/javascript": [
+              "download(\"download_9245389d-f9f2-413d-9a96-813c9a84edcb\", \"SMS_Spam_Detector_Files.zip\", 244173)"
+            ]
+          },
+          "metadata": {}
+        }
+      ]
+    }
+  ]
+}
